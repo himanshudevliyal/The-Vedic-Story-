@@ -18,7 +18,14 @@ export default function CheckoutLoginModal({
   setForm,
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next);
+        if (!next) setForm("login");
+      }}
+    >
+      {" "}
       <DialogContent className=" lg:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Sign In to Checkout</DialogTitle>

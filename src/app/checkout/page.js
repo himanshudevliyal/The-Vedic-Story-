@@ -27,9 +27,12 @@ import {
 } from "@/components/ui/dialog";
 import { getAddresses } from "@/services/address-services";
 import Loader from "@/components/loader";
-import { getCartItems } from "@/services/cart-services";
+import { getCartItems, addToCart } from "@/services/cart-services";
 import AddressForm from "@/components/address-form";
 import config from "@/config";
+// LOCAL STORAGE — same source used by useAddToCart, so guest cart stays in sync
+import { getLocalCart } from "@/hooks/useAddToCart";
+import CheckoutLoginModal from "./_componets/checkout-login-modal";
 
 export const addressSchema = z.object({
   fullname: z.string().min(1, "fullname is required"),
@@ -59,7 +62,7 @@ export const createOrderSchema = z.object({
 });
 
 export default function CheckoutPage() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const dispatch = useDispatch();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -75,10 +78,66 @@ export default function CheckoutPage() {
   const [isCodConfirmOpen, setIsCodConfirmOpen] = useState(false);
   const [pendingPaymentMethod, setPendingPaymentMethod] = useState("payu");
 
+  // LOGIN MODAL — guest tries to place order, gets prompted to login here
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [form, setForm] = useState("login");
+
+  // LOCAL STORAGE — guest cart (no user logged in)
+  const [localCartItems, setLocalCartItems] = useState([]);
+
+  useEffect(() => {
+    if (!user) {
+      setLocalCartItems(getLocalCart());
+    }
+  }, [user]);
+
+  // LOGIN MODAL — silent (no toast per item) mutation to push local cart items to server after login
+  const syncCartMutation = useMutation({
+    mutationFn: addToCart,
+    onError: (error) => {
+      handleError(error);
+    },
+  });
+
+  const handleLoginSuccess = async (loggedInUser) => {
+    try {
+      if (form === "signup") {
+        setForm("login");
+        return;
+      }
+
+      setUser(loggedInUser);
+
+      const storedCart = getLocalCart();
+      storedCart.forEach((item) => {
+        syncCartMutation.mutate({
+          product_variant_id: item.product_variant_id,
+          quantity: item.quantity,
+        });
+      });
+
+      localStorage.removeItem("cart");
+      setLocalCartItems([]);
+
+      await queryClient.invalidateQueries({ queryKey: ["cart-items"] });
+      await queryClient.invalidateQueries({ queryKey: ["cart"] });
+      await queryClient.invalidateQueries({ queryKey: ["addresses"] });
+
+      setLoginModalOpen(false);
+    } catch (err) {
+      console.log("Error refetching after login:", err);
+    }
+  };
+
   const { register, handleSubmit, formState, setValue, watch } = useForm({
     mode: "onChange",
     resolver: zodResolver(
-      createOrderSchema.pick({ billing_address: true, shipping_address: true }),
+      // guest has no billing address UI, so only require shipping_address when logged out
+      createOrderSchema.pick(
+        user
+          ? { billing_address: true, shipping_address: true }
+          : { shipping_address: true },
+      ),
     ),
     defaultValues: {
       shipping_address: {
@@ -116,6 +175,9 @@ export default function CheckoutPage() {
     enabled: !!user,
   });
 
+  // LOCAL STORAGE — this is what the whole page (summary, subtotal, order) reads from now
+  const displayCartItems = user ? cartItems : localCartItems;
+
   const createMutation = useMutation({
     mutationFn: createOrder,
     onSuccess: async (data) => {
@@ -141,12 +203,13 @@ export default function CheckoutPage() {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["addresses"],
     queryFn: getAddresses,
+    enabled: !!user,
   });
 
-  // subtotal now comes from backend cart items response (product_price is authoritative)
+  // subtotal now reads from displayCartItems so it works for guest (local) and logged-in (server) cart
   const subtotal = useMemo(() => {
     return (
-      cartItems?.reduce(
+      displayCartItems?.reduce(
         (sum, item) =>
           sum +
           Number(String(item.product_price).replace(/[^\d.-]/g, "")) *
@@ -154,7 +217,7 @@ export default function CheckoutPage() {
         0,
       ) ?? 0
     );
-  }, [cartItems]);
+  }, [displayCartItems]);
 
   const estimatedTaxes = subtotal * 0;
   const total = subtotal + estimatedTaxes;
@@ -215,6 +278,11 @@ export default function CheckoutPage() {
   });
 
   const handleCodClick = handleSubmit(() => {
+    // LOGIN MODAL — guest with a valid address form gets prompted to log in here
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
     // form is valid, open confirm dialog before actually placing the order
     setIsCodConfirmOpen(true);
   });
@@ -252,8 +320,125 @@ export default function CheckoutPage() {
       </div>
     </div>
   );
+
+  // LOCAL STORAGE — guest manual address form (no saved addresses to pick from)
+  const renderGuestShippingForm = () => (
+    <div className="space-y-3">
+      <div>
+        <Label htmlFor="fullname">Full Name</Label>
+        <input
+          {...register("shipping_address.fullname")}
+          id="fullname"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="Enter your full name"
+        />
+        {errors?.shipping_address?.fullname && (
+          <span className="text-sm text-red-500">
+            {errors.shipping_address.fullname.message}
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="street">Street</Label>
+          <input
+            {...register("shipping_address.street")}
+            id="street"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Street address"
+          />
+          {errors?.shipping_address?.street && (
+            <span className="text-sm text-red-500">
+              {errors.shipping_address.street.message}
+            </span>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="house">House Number</Label>
+          <input
+            {...register("shipping_address.house")}
+            id="house"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="House #"
+          />
+          {errors?.shipping_address?.house && (
+            <span className="text-sm text-red-500">
+              {errors.shipping_address.house.message}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="city">City</Label>
+          <input
+            {...register("shipping_address.city")}
+            id="city"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="City"
+          />
+          {errors?.shipping_address?.city && (
+            <span className="text-sm text-red-500">
+              {errors.shipping_address.city.message}
+            </span>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="state">State</Label>
+          <input
+            {...register("shipping_address.state")}
+            id="state"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="State"
+          />
+          {errors?.shipping_address?.state && (
+            <span className="text-sm text-red-500">
+              {errors.shipping_address.state.message}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="postal_code">Postal Code</Label>
+          <input
+            {...register("shipping_address.postal_code")}
+            id="postal_code"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Postal code"
+          />
+          {errors?.shipping_address?.postal_code && (
+            <span className="text-sm text-red-500">
+              {errors.shipping_address.postal_code.message}
+            </span>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="phone">Phone</Label>
+          <input
+            {...register("shipping_address.phone")}
+            id="phone"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Phone number"
+          />
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 pt-1">
+        Please log in to save this address and place your order.
+      </p>
+    </div>
+  );
+
   return (
     <>
+      <CheckoutLoginModal
+        open={loginModalOpen}
+        onOpenChange={setLoginModalOpen}
+        onLoginSuccess={handleLoginSuccess}
+        form={form}
+        setForm={setForm}
+      />
+
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="section bg-gray-50 min-h-screen py-8"
@@ -273,7 +458,10 @@ export default function CheckoutPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-2">
-                  {isLoading ? (
+                  {/* LOCAL STORAGE — guest gets a manual form, no saved-address list */}
+                  {!user ? (
+                    renderGuestShippingForm()
+                  ) : isLoading ? (
                     <Loader />
                   ) : isError ? (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -335,8 +523,8 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
-              {/* Billing Address Section */}
-              {!useSameAddress && (
+              {/* Billing Address Section (logged-in users only) */}
+              {user && !useSameAddress && (
                 <Card className="shadow-sm border-gray-200 p-4">
                   <CardHeader className="border-b border-gray-100 pb-4">
                     <div className="flex items-center gap-2">
@@ -390,35 +578,37 @@ export default function CheckoutPage() {
                 </Card>
               )}
 
-              {/* Use Same Address Toggle */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    id="same-address"
-                    checked={useSameAddress}
-                    onCheckedChange={(checked) => {
-                      setUseSameAddress(checked);
-                      if (checked && selectedShippingAddressId) {
-                        const shippingAddr = data.addresses.find(
-                          (a) => a.id === selectedShippingAddressId,
-                        );
-                        if (shippingAddr) {
-                          setSelectedBillingAddressId(
-                            selectedShippingAddressId,
+              {/* Use Same Address Toggle (logged-in users only) */}
+              {user && (
+                <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      id="same-address"
+                      checked={useSameAddress}
+                      onCheckedChange={(checked) => {
+                        setUseSameAddress(checked);
+                        if (checked && selectedShippingAddressId) {
+                          const shippingAddr = data.addresses.find(
+                            (a) => a.id === selectedShippingAddressId,
                           );
-                          setValue("billing_address", shippingAddr.address);
+                          if (shippingAddr) {
+                            setSelectedBillingAddressId(
+                              selectedShippingAddressId,
+                            );
+                            setValue("billing_address", shippingAddr.address);
+                          }
                         }
-                      }
-                    }}
-                  />
-                  <Label
-                    htmlFor="same-address"
-                    className="text-sm text-gray-700 cursor-pointer font-normal"
-                  >
-                    Use same address for billing
-                  </Label>
+                      }}
+                    />
+                    <Label
+                      htmlFor="same-address"
+                      className="text-sm text-gray-700 cursor-pointer font-normal"
+                    >
+                      Use same address for billing
+                    </Label>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Address Modal */}
 
@@ -426,8 +616,17 @@ export default function CheckoutPage() {
               <Card className="shadow-sm border-gray-200 p-4">
                 <CardContent className="pt-6 space-y-3">
                   {!user && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center text-sm font-medium">
-                      Please log in first to place an order
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center text-sm font-medium flex items-center justify-center gap-3 flex-wrap">
+                      <span>Please log in first to place an order</span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="bg-transparent"
+                        onClick={() => setLoginModalOpen(true)}
+                      >
+                        Login
+                      </Button>
                     </div>
                   )}
 
@@ -436,7 +635,7 @@ export default function CheckoutPage() {
                     disabled={
                       createMutation.isPending ||
                       !user ||
-                      cartItems?.length === 0
+                      displayCartItems?.length === 0
                     }
                     className="w-full h-12 text-base font-semibold"
                   >
@@ -449,9 +648,7 @@ export default function CheckoutPage() {
                     type="button"
                     variant="outline"
                     disabled={
-                      createMutation.isPending ||
-                      !user ||
-                      cartItems?.length === 0
+                      createMutation.isPending || displayCartItems?.length === 0
                     }
                     className="w-full h-12 text-base font-semibold gap-2"
                     onClick={handleCodClick}
@@ -459,7 +656,9 @@ export default function CheckoutPage() {
                     <Banknote className="w-4 h-4" />
                     {createMutation.isPending && pendingPaymentMethod === "cod"
                       ? "Processing..."
-                      : "Cash on Delivery"}
+                      : !user
+                        ? "Login to Place Order"
+                        : "Cash on Delivery"}
                   </Button>
                 </CardContent>
               </Card>
@@ -475,12 +674,13 @@ export default function CheckoutPage() {
                 </CardHeader>
                 <CardContent className="pt-2">
                   <div className="space-y-4 mb-6 max-h-70 overflow-y-auto">
-                    {cartItems?.length === 0 ? (
+                    {/* LOCAL STORAGE — reads guest cart from localStorage via displayCartItems */}
+                    {displayCartItems?.length === 0 ? (
                       <p className="text-center text-gray-500 py-8">
                         Your cart is empty.
                       </p>
                     ) : (
-                      cartItems?.map((item) => (
+                      displayCartItems?.map((item) => (
                         <div
                           key={item.id}
                           className="flex gap-3 pb-4 border-b border-gray-100 last:border-b-0 last:pb-0"

@@ -47,4 +47,9 @@ export const allRoutes = [
     link: "/product/:slug",
     roles: [],
   },
+
+  {
+    link: "/checkout",
+    roles: [],
+  },
 ];

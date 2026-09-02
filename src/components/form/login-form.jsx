@@ -128,9 +128,9 @@ export default function LoginForm({ callback, isSignUpDetails = true }) {
 
       {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
 
-      <button type="submit" className="btn w-full" disabled={isLoading}>
+      <Button type="submit" className="btn w-full mb-2" disabled={isLoading}>
         {isLoading ? "Signing in..." : "Sign In"}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -226,3 +226,26 @@ h1,h2,h3,h4, h5, h6 {
 .PhoneInput {
   @apply flex rounded-md;
 }
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
+    transition-all disabled:pointer-events-none disabled:opacity-50
+    shrink-0 outline-none rounded-full px-6 h-9 py-2
+    bg-primary text-primary-foreground hover:bg-[#522400];
+}
+
+.btn:focus-visible {
+  @apply ring-2 ring-accent;
+}
+
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
+    transition-all disabled:pointer-events-none disabled:opacity-50
+    shrink-0 outline-none rounded-full px-6 h-9 py-2
+    border border-primary text-primary bg-transparent
+    hover:bg-primary hover:text-primary-foreground;
+}
+
+.btn-outline:focus-visible {
+  @apply ring-2 ring-accent;
+}
