@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import VariantSelector from "./variant-selector";
 import ProductDetailsTabs from "./others";
@@ -31,42 +31,43 @@ export default function ProductPage({ product }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const variants = product.variants.map(mapVariant);
+  const variants = useMemo(
+    () => product.variants.map(mapVariant),
+    [product.variants],
+  );
 
   const variantId = searchParams.get("variant") ?? variants[0]?.id;
 
-  const [pack, setPack] = useState(() => {
-    const found = product?.variants?.find((v) => v.id == variantId);
-    return found ? mapVariant(found) : mapVariant(product.variants[0]);
-  });
+  /* Derived (not stateful) — computed fresh from variantId on every render */
+  const selectedVariant = useMemo(
+    () => variants.find((v) => v.id == variantId) ?? variants[0],
+    [variants, variantId],
+  );
 
-  const [pictures, setPictures] = useState(() => {
-    const found = product?.variants?.find((v) => v.id == variantId);
-    if (found) {
-      return found.pictures.length ? found.pictures : product.pictures;
-    }
-    return product.pictures;
-  });
+  const pictures = useMemo(
+    () =>
+      selectedVariant?.pictures?.length
+        ? selectedVariant.pictures
+        : product.pictures,
+    [selectedVariant, product.pictures],
+  );
+
+  /* activeImage: independent state (thumbnail click), but reset when
+     variant changes. Reset happens during render, not in an effect —
+     this is the pattern React docs recommend instead of
+     useEffect+setState for derived resets. */
+  const [activeImage, setActiveImage] = useState(pictures?.[0]);
+  const [prevVariantId, setPrevVariantId] = useState(variantId);
+
+  if (variantId !== prevVariantId) {
+    setPrevVariantId(variantId);
+    setActiveImage(pictures?.[0]);
+  }
 
   const { addToCart, isLoading } = useAddToCart();
 
-  // Keep pack & pictures in sync when URL variant param changes
-  useEffect(() => {
-    const found = product?.variants?.find((v) => v.id == variantId);
-    if (found) {
-      setPack(mapVariant(found));
-      setPictures(found.pictures.length ? found.pictures : product.pictures);
-    }
-  }, [variantId, product]);
-
-  /* Active variant: ?variant=<id> in URL, fallback to first */
-  const selectedVariant =
-    variants.find((v) => v.id == variantId) ?? variants[0];
-
   /* Update URL param on variant click — no full re-render */
   function handleVariantSelect(pack) {
-    setPack(pack);
-    setPictures(pack.pictures.length ? pack.pictures : product.pictures);
     const next = new URLSearchParams(searchParams.toString());
     next.set("variant", pack.id);
     router.push(`?${next.toString()}`, { scroll: false });
@@ -106,7 +107,12 @@ export default function ProductPage({ product }) {
               {pictures.map((img, i) => (
                 <button
                   key={i}
-                  className="h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-xl border transition"
+                  onClick={() => setActiveImage(img)}
+                  className={`h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-xl border transition ${
+                    activeImage === img
+                      ? "border-primary ring-2 ring-primary"
+                      : "border-transparent"
+                  }`}
                 >
                   <Image
                     src={`${config.file_base}${img}`}
@@ -120,14 +126,14 @@ export default function ProductPage({ product }) {
             </div>
 
             {/* Main Image with Lens */}
-            <div className="relative flex-1 overflow-hidden rounded-2xl  shadow-sm cursor-none">
+            <div className="relative flex-1 overflow-hidden rounded-2xl shadow-sm cursor-none">
               <Lens zoomFactor={2} lensSize={150} isStatic={false}>
                 <Image
-                  src={`${config.file_base}${pictures?.[0]}`}
-                  alt="Immunity Booster"
+                  src={`${config.file_base}${activeImage}`}
+                  alt={product.title}
                   width={600}
                   height={600}
-                  className="  object-contain   mix-blend-multiply max-h-[500px]"
+                  className="object-contain mix-blend-multiply max-h-[500px]"
                 />
               </Lens>
             </div>
@@ -156,16 +162,16 @@ export default function ProductPage({ product }) {
               </span>
             </div>
 
-            {pack && (
+            {selectedVariant && (
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-2xl font-bold sm:text-3xl lg:text-4xl">
-                  ₹{pack.price}
+                  ₹{selectedVariant.price}
                 </span>
                 <span className="text-base line-through text-muted-foreground sm:text-lg">
-                  ₹ {pack.originalPrice}
+                  ₹ {selectedVariant.originalPrice}
                 </span>
                 <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-                  ₹ {pack.originalPrice - pack.price} OFF
+                  ₹ {selectedVariant.originalPrice - selectedVariant.price} OFF
                 </span>
               </div>
             )}
@@ -195,13 +201,13 @@ export default function ProductPage({ product }) {
             height={300}
             alt="Herbal Ingredients"
             className="w-full rounded-xl"
-            src="/img/herbal.webp"
+            src="/img/product-slider.png"
           />
 
-          <div className="flex flex-col gap-4 pt-4 sm:flex-row">
+          <div className="flex flex-col gap-4 pt-4 md:flex-row">
             <Button
               size="lg"
-              className="flex-1 gap-2 rounded-xl text-base font-semibold shadow-sm"
+              className="md:flex-1 gap-2  rounded-xl text-base font-semibold shadow-sm"
               onClick={() => handleAdd(false)}
               disabled={selectedVariant.stock === 0 || isLoading}
             >
@@ -214,7 +220,7 @@ export default function ProductPage({ product }) {
               variant="outline"
               onClick={() => handleAdd(true)}
               disabled={selectedVariant.stock === 0 || isLoading}
-              className="flex-1 rounded-xl text-base font-semibold"
+              className="md:flex-1 rounded-xl text-base font-semibold"
             >
               Buy Now
             </Button>

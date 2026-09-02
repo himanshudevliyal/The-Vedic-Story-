@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import { toast } from "sonner";
 import { getLocalCart } from "@/hooks/useAddToCart";
+import Link from "next/link";
 
 export default function LoginForm({ callback, isSignUpDetails = true }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -117,13 +118,12 @@ export default function LoginForm({ callback, isSignUpDetails = true }) {
       </div>
 
       {isSignUpDetails && (
-        <button
-          type="button"
-          onClick={() => gustUserForm(true)}
-          className="text-sm text-blue-600 hover:underline"
+        <Link
+          href="/signup"
+          className="text-sm text-blue-600 hover:underline  mb-2   block"
         >
           Don’t have an account? Sign up
-        </button>
+        </Link>
       )}
 
       {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
