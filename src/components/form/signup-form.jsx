@@ -95,32 +95,28 @@ export default function SignupForm({ callback, isLoginDetails = true }) {
 
       const data = await response.json();
 
-      // ❌ Backend error
-      if (!response.ok) {
-        console.log("Backend Error ", data);
+      if (!response.ok || data.status === false) {
+        const message = data?.message || "Something went wrong";
+        toast.error(message);
 
-        // ✅ Toast
-        if (data.message) {
-          toast.error(data.message);
+        if (data?.field) {
+          // backend-driven, reliable
+          setError(data.field, { type: "server", message });
+        } else {
+          // fallback: string matching
+          if (message.toLowerCase().includes("username")) {
+            setError("username", { type: "server", message });
+          }
+          if (message.toLowerCase().includes("email")) {
+            setError("email", { type: "server", message });
+          }
         }
-
-        // ✅ Field errors
-        if (data.errors) {
-          Object.keys(data.errors).forEach((field) => {
-            setError(field, {
-              type: "server",
-              message: data.errors[field],
-            });
-          });
-        }
-
         return;
       }
 
       // ✅ Success
       toast.success("Signup successful!");
       callback?.();
-      // router.push("/login");
     } catch (err) {
       console.error("Catch Error 👉", err);
       toast.error("Failed to register. Try again later.");
