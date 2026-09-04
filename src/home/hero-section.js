@@ -11,6 +11,10 @@ import {
 import Autoplay from "embla-carousel-autoplay";
 
 const slides = [
+   {
+    src: "/img/janmashtami.png",
+    alt: "Happy Janmashtami – Celebrate with Ayurvedic Goodness",
+  },
   {
     src: "/img/banner-1.png",
     alt: "Natural Ayurvedic Products – Free Shipping Above Rs1000",
