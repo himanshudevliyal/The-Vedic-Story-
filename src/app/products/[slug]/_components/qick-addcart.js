@@ -13,22 +13,8 @@ export default function QickAdd({
   addToCart,
   stock,
 }) {
-  const [showBar, setShowBar] = useState(false);
   const [qty, setQty] = useState(initialQuantity);
   const [hideForFooter, setHideForFooter] = useState(false);
-
-  // ---------------- SCROLL SHOW/HIDE ----------------
-  useEffect(function () {
-    function handleScroll() {
-      setShowBar(window.scrollY > 100);
-    }
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return function () {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
 
   // ---------------- FOOTER DETECT ----------------
   useEffect(function () {
@@ -55,7 +41,7 @@ export default function QickAdd({
       className={`hidden lg:flex fixed bottom-0 left-0 w-full z-[999]
       transition-all duration-500 ease-in-out
       ${
-        showBar && !hideForFooter
+        !hideForFooter
           ? "translate-y-0 opacity-100"
           : "translate-y-full opacity-0"
       }`}
@@ -71,6 +57,7 @@ export default function QickAdd({
               height={64}
               className="w-16 h-16 rounded-lg object-cover border"
             />
+
             <div>
               <p className="font-semibold line-clamp-1">{title}</p>
               <p className="text-primary font-bold">₹{price}</p>
