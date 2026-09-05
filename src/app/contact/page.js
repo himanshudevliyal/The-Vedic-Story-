@@ -33,10 +33,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-lg">Phone</h3>
                     <a
-                      href="tel:+918130307546"
+                      href="tel:7827307546"
                       className="text-green-100 hover:text-white transition-colors"
                     >
-                      +91 81303 07546
+                      +91 78273 07546
                     </a>
                   </div>
                 </div>
@@ -48,10 +48,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-lg">Email</h3>
                     <a
-                      href="mailto:Care@thevedikstory.in"
+                      href="mailto:thevedicstory@gmail.com"
                       className="text-green-100 hover:text-white transition-colors"
                     >
-                      Care@thevedikstory.in
+                      thevedicstory@gmail.com
                     </a>
                   </div>
                 </div>

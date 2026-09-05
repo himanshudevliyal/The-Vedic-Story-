@@ -113,7 +113,7 @@ export default function Footer() {
 
               {/* Phone */}
               <a
-                href="tel:+918130307546"
+                href="tel:7827307546"
                 className="group flex items-center gap-3"
               >
                 <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[#D8A83E]/10">
@@ -121,13 +121,13 @@ export default function Footer() {
                 </span>
 
                 <span className="text-white/60 transition-colors group-hover:text-[#D8A83E]">
-                  +91 81303 07546
+                  +91 7827 307546
                 </span>
               </a>
 
               {/* Email */}
               <a
-                href="mailto:Care@thevedikstory.in"
+                href="mailto:thevedicstory@gmail.com"
                 className="group flex items-center gap-3"
               >
                 <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[#D8A83E]/10">
@@ -135,7 +135,7 @@ export default function Footer() {
                 </span>
 
                 <span className="text-white/60 transition-colors group-hover:text-[#D8A83E]">
-                  Care@thevedikstory.in
+                  thevedicstory@gmail.com
                 </span>
               </a>
             </div>
