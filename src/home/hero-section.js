@@ -3,15 +3,17 @@
 import { useState, useEffect, useRef, Component } from "react";
 import Image from "next/image";
 import Link from "next/link";
+
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+
 import Autoplay from "embla-carousel-autoplay";
 
 const slides = [
-   {
+  {
     src: "/img/janmashtami.png",
     alt: "Happy Janmashtami – Celebrate with Ayurvedic Goodness",
   },
@@ -23,15 +25,18 @@ const slides = [
     src: "/img/banner-2.png",
     alt: "Boost Immunity with Herbal Ayurvedic Supplements",
   },
-  { src: "/img/banner-3.png", alt: "Trusted Ayurvedic Brands – Shop Now" },
+  {
+    src: "/img/banner-3.png",
+    alt: "Trusted Ayurvedic Brands – Shop Now",
+  },
 ];
 
-/* ── Fallback: SSR + carousel error dono ke liye ── */
+/* ── Fallback Banner ── */
 function FallbackBanner() {
   return (
     <section aria-label="Hero Banner">
-      <Link href="/products">
-        <div className="relative w-full aspect-[21/9] min-h-[200px]">
+      <Link href="/products" className="block">
+        <div className="relative w-full aspect-[21/9] min-h-[200px] overflow-hidden">
           <Image
             src={slides[0].src}
             alt={slides[0].alt}
@@ -46,15 +51,18 @@ function FallbackBanner() {
   );
 }
 
-/* ── React Error Boundary (class component — React requirement) ── */
+/* ── React Error Boundary ── */
 class ErrorBoundary extends Component {
   state = { hasError: false };
+
   static getDerivedStateFromError() {
     return { hasError: true };
   }
+
   componentDidCatch() {
     this.props.onError?.();
   }
+
   render() {
     return this.state.hasError ? null : this.props.children;
   }
@@ -64,13 +72,21 @@ class ErrorBoundary extends Component {
 export default function HeroSection() {
   const [mounted, setMounted] = useState(false);
   const [carouselFailed, setFailed] = useState(false);
-  const autoplay = useRef(Autoplay({ delay: 4000, stopOnInteraction: false }));
+
+  const autoplay = useRef(
+    Autoplay({
+      delay: 4000,
+      stopOnInteraction: false,
+    })
+  );
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted || carouselFailed) return <FallbackBanner />;
+  if (!mounted || carouselFailed) {
+    return <FallbackBanner />;
+  }
 
   return (
     <section aria-label="Hero Banner">
@@ -84,18 +100,21 @@ export default function HeroSection() {
           opts={{ loop: true }}
           plugins={[autoplay.current]}
         >
-          <CarouselContent className="-ml-0">
+          <CarouselContent className="ml-0">
             {slides.map((slide, index) => (
-              <CarouselItem key={index} className="pl-0 basis-full">
-                <Link href="/products">
-                  <div className="relative w-full   ">
+              <CarouselItem
+                key={slide.src}
+                className="pl-0 basis-full"
+              >
+                <Link href="/products" className="block">
+                  <div className="relative w-full aspect-[21/9] min-h-[200px] overflow-hidden">
                     <Image
                       src={slide.src}
                       alt={slide.alt}
-                      width={1000}
-                      height={1000}
+                      fill
                       priority={index === 0}
-                      className=" w-full object-center"
+                      sizes="100vw"
+                      className="object-cover object-center"
                     />
                   </div>
                 </Link>
