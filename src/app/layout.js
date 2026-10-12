@@ -1,5 +1,6 @@
 // app/layout.js
 import { Playfair_Display, DM_Sans } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
 import QueryProvider from "@/providers/query-client-provider";
@@ -20,6 +21,7 @@ const dmSans = DM_Sans({
   display: "swap",
   weight: ["400", "500", "700"],
 });
+
 const BASE_URL = "http://thevedicstory.in";
 
 export const metadata = {
@@ -63,6 +65,11 @@ export const metadata = {
 
   creator: "The Vedic Story",
   publisher: "The Vedic Story",
+
+  // Google Search Console verification
+  verification: {
+    google: "ApSnSOx5pksYEaqT_ZA5MzpVEKbCzwbBaeBbkjvDwk4",
+  },
 
   robots: {
     index: true,
@@ -174,6 +181,7 @@ export default function RootLayout({ children }) {
           </Providers>
         </QueryProvider>
       </body>
+      <GoogleAnalytics gaId="G-KDRDP83CD6" />
     </html>
   );
 }

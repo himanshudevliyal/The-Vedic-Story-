@@ -1,0 +1,42 @@
+# The Vedic Story
+
+> The Vedic Story is an Indian direct-to-consumer brand based in Faridabad, Haryana, selling traditionally handcrafted A2 Gir Cow Bilona Ghee online with free shipping across India. The ghee is made in small batches using the Vedic Bilona method and a commitment to Ahimsa (non-violence) in cow care.
+
+The Vedic Story makes ghee from the milk of free-grazing Gir cows. The milk is set into curd in clay pots, churned with a wooden churner in both directions (the traditional Bilona method), and the cultured butter is slow-boiled over a fire to develop its golden colour, granular texture and aroma. The ghee is packed in food-grade glass jars, with no plastic.
+
+Key facts:
+- Product: A2 Gir Cow Bilona Ghee (also searched as Vedic ghee, desi cow ghee, bilona ghee, Ahimsa ghee)
+- Milk: 100% A2 milk from Gir cows
+- Method: Traditional Bilona, hand-churned, slow-fire prepared, small batches
+- Ahimsa practice: Calves are fed first and only surplus milk is taken. The brand states no synthetic hormones or antibiotics, and that old or non-lactating cows are never sold to slaughterhouses
+- Quality: Lab-tested; lab reports are published on the website
+- Packaging: Food-grade glass jars
+- Shipping: Free across India
+- Location: Faridabad, Haryana, India
+- Language and market: English, India
+
+## Core Pages
+
+- [Home](https://www.thevedicstory.in/): Overview of the brand, the Bilona process, Ahimsa commitment, customer reviews and FAQs
+- [Shop](https://www.thevedicstory.in/products): A2 Gir Cow Bilona Ghee products, sizes and pricing
+- [Our Story](https://www.thevedicstory.in/our-story): The brand's background, values and purpose
+
+## Process and Quality
+
+- [The Vedic Process](https://www.thevedicstory.in/vedic-process): Step-by-step explanation of how the ghee is made, from A2 milk and clay-pot curd setting to wooden churning and slow-fire boiling
+- [The Ahimsa Promise](https://www.thevedicstory.in/ahimsa-promise): The brand's cow welfare commitments, including calf-first milking and lifelong care of cows
+- [Lab Reports](https://www.thevedicstory.in/lab-reports): Third-party lab test results supporting purity claims
+
+## Support
+
+- [Contact](https://www.thevedicstory.in/contact): Phone, email and location details for orders and enquiries
+
+## Contact
+
+- Email: thevedicstory@gmail.com
+- Phone: +91 7827 307546
+- Address: Faridabad, Haryana, India
+
+## Optional
+
+- [Sitemap](https://www.thevedicstory.in/sitemap.xml): Full list of indexable pages

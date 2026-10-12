@@ -1,0 +1,9 @@
+# robots.txt for thevedicstory.in
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+
+Sitemap: https://www.thevedicstory.in/sitemap.xml
